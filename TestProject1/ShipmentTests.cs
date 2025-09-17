@@ -12,6 +12,7 @@ namespace TestProject1
     {
         public ShipmentTests() { }
 
+
         [Fact]
         public async Task Post_WithValidInput_ReturnsTokenResponse()
         {
@@ -20,24 +21,29 @@ namespace TestProject1
             var controller = new ShipmentsController(mockLogger.Object);
 
             // Act
-            var result = await controller.Post("valid-value");
+            var result = await controller.Post();
 
             // Assert
-            Assert.IsType<WebApplication2.Model.TokenResponse>(result);
+            Assert.IsType<ActionResult<WebApplication2.Model.TokenResponse>>(result);
+            Assert.IsType<WebApplication2.Model.TokenResponse>(result.Value);
         }
 
+
         [Fact]
-        public async Task Post_WithEmptyInput_ReturnsTokenResponseOrError()
+        public async Task Post_WhenApiFails_ReturnsErrorStatus()
         {
             // Arrange
             var mockLogger = new Mock<ILogger<ShipmentsController>>();
             var controller = new ShipmentsController(mockLogger.Object);
 
+            // Simulate API failure by using an invalid proxy address
+            controller.proxyAddress = "https://invalid.url";
+
             // Act
-            var result = await controller.Post("");
+            var result = await controller.Post();
 
             // Assert
-            Assert.True(result is WebApplication2.Model.TokenResponse || result == null);
+            Assert.True(result.Result is ObjectResult || result.Result is StatusCodeResult);
         }
 
         [Fact]
@@ -59,8 +65,9 @@ namespace TestProject1
             Assert.IsType<ActionResult<WebApplication2.Model.ShipmentResponse>>(result);
         }
 
+
         [Fact]
-        public async Task Get_WithoutAuthorization_ReturnsNotFound()
+        public async Task Get_WithoutAuthorization_ReturnsUnauthorized()
         {
             // Arrange
             var mockLogger = new Mock<ILogger<ShipmentsController>>();
@@ -72,11 +79,12 @@ namespace TestProject1
             var result = await controller.Get("Sea", 1);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
+            Assert.IsType<UnauthorizedResult>(result.Result);
         }
 
+
         [Fact]
-        public async Task Get_WithInvalidAuthorizationScheme_ReturnsNotFound()
+        public async Task Get_WithInvalidAuthorizationScheme_ReturnsUnauthorized()
         {
             // Arrange
             var mockLogger = new Mock<ILogger<ShipmentsController>>();
@@ -89,7 +97,7 @@ namespace TestProject1
             var result = await controller.Get("Sea", 1);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
+            Assert.IsType<UnauthorizedResult>(result.Result);
         }
 
         [Fact]
