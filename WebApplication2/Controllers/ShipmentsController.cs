@@ -178,14 +178,13 @@ namespace WebApplication2.Controllers
                 var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
                 client.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Basic", "MG9hYjJkdmpudmJiQ1VqTGswaTc6TkJpbENtNC1IQkp3VVZ3TFhmejloSklPTjdSZ2dQZkc3MnFIQkdiMGFCWXRFQ2ZhZGJmZUItanlSTXlDaGY3Vg==");
+        new AuthenticationHeaderValue("Basic", "--token--");
                 var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             { "grant_type", "password" },
-            //    {"client_id","0oab2dvjnvbbCUjLk0i7" },
-            //    {"client_secret","NBilCm4-HBJwUVwLXfz9hJION7RggPfG72qHBGb0aBYtECfadbfeB-jyRMyChf7V" },
-            { "username", "dashti81@gmail.com" },
-            { "password", "(op*1*9B}8M2" },
+            
+            { "username", "<user name>" },
+            { "password", "<passworrd>" },
             { "scope", "offline_access" }
         });
 
