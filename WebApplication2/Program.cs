@@ -1,4 +1,6 @@
 using Serilog;
+using WebApplication2.Middlewre;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,17 +14,19 @@ builder.Host.UseSerilog(); // Integrates Serilog with the .NET logging infrastru
 
 // Add services to the container.
 //builder.Services.AddSingleton<Microsoft.Extensions.Logging.ILogger, Log>();
-builder.Services.AddControllers();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAnyOriginAndHeader",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("http://localhost:4200")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
 });
+builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -35,12 +39,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseCors("AllowAnyOriginPolicy");
-
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAnyOriginPolicy");
+
 app.UseAuthorization();
 
 app.MapControllers();

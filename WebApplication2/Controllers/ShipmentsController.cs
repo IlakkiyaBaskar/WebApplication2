@@ -7,37 +7,26 @@ using static System.Net.WebRequestMethods;
 using Newtonsoft.Json;
 using WebApplication2.Model;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.Cors;
 
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WebApplication2.Controllers
 {
+    [EnableCors("AllowAnyOriginPolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class ShipmentsController : ControllerBase
     {
         public string proxyAddress = "https://login.hillebrand.com/oauth2/aus95hq7r8iIqp14M0i7/v1/token";
-        public string proxyUserName = "dashti81@gmail.com";
-        public string proxyPassword = "(op*1*9B}8M2";
-        public HttpClientHandler httpHandler;
+       
         private readonly ILogger<ShipmentsController> _logger;
 
         public  ShipmentsController(ILogger<ShipmentsController> logger)
         {
             _logger = logger;
-            var proxy = new WebProxy
-            {
-                Address = new Uri(proxyAddress),
-                Credentials = new NetworkCredential(proxyUserName, proxyPassword),
-                UseDefaultCredentials = false // Explicitly set to false when providing custom credentials
-            };
-
-            httpHandler = new HttpClientHandler
-            {
-                Proxy = proxy,
-                UseProxy = true
-            };
+           
         }
         // GET: api/<ShipmentsController>
         [HttpGet]
@@ -73,34 +62,42 @@ namespace WebApplication2.Controllers
 
                             var response = await client.GetAsync(QueryHelpers.AddQueryString("https://api.hillebrandgori.com/v6/shipments",query));
 
-                            string responseBody = await response.Content.ReadAsStringAsync();
+                            if (response.IsSuccessStatusCode)
+                            {
 
-                            shipmentResponse = JsonConvert.DeserializeObject<ShipmentResponse>(responseBody);
+                                string responseBody = await response.Content.ReadAsStringAsync();
+
+                                shipmentResponse = JsonConvert.DeserializeObject<ShipmentResponse>(responseBody);
 
 
-                            _logger.LogInformation(response.StatusCode.ToString());
+                                _logger.LogInformation(response.StatusCode.ToString());
 
-                            return Ok(shipmentResponse);
+                                return Ok(shipmentResponse);
+                            }
+                            else
+                            {
+                                return StatusCode((int)response.StatusCode, response.StatusCode);
+                            }
 
                         }
                         else
                         {
-                            return NotFound();
+                            return Unauthorized();
                         }
                     }
                     else
                     {
-                        return NotFound();
+                        return Unauthorized();
                     }
                 }
                 else
                 {
-                    return NotFound();
+                    return Unauthorized();
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -133,39 +130,48 @@ namespace WebApplication2.Controllers
                             var response = await client.GetAsync($"https://api.hillebrandgori.com/v6/shipments/{id}");
                             string responseBody = await response.Content.ReadAsStringAsync();
 
-                            shipmentResponse = JsonConvert.DeserializeObject<ShipmentResponse>(responseBody);
+                            if (response.IsSuccessStatusCode)
+                            {
+
+                                shipmentResponse = JsonConvert.DeserializeObject<ShipmentResponse>(responseBody);
 
 
-                            _logger.LogInformation(response.StatusCode.ToString());
+                                _logger.LogInformation(response.StatusCode.ToString());
 
-                            return Ok(shipmentResponse);
+                                return Ok(shipmentResponse);
+                            }
+                            else
+                            {
+                                return NotFound($"Shipment with {id} not found");
+                            }
                         }
                         else
                         {
-                            return NotFound();
+                            return Unauthorized();
                         }
                     }
                     else
                     {
-                        return NotFound();
+                        return Unauthorized();
                     }
                 }
                 else
                 {
-                    return NotFound();
+                    return Unauthorized();
                 }
 
             }
             catch (Exception ex)
             {
-                throw ex;
+                
+                return StatusCode(500,ex.Message);
             }
              
         }
 
         // POST api/<ShipmentsController>
         [HttpPost]
-        public async Task<TokenResponse> Post([FromBody] string value)
+        public async Task<ActionResult<TokenResponse>> Post()
         {
             try
             {
@@ -186,17 +192,24 @@ namespace WebApplication2.Controllers
 
 
                 var response = await client.PostAsync(proxyAddress, content);
-                string responseBody = await response.Content.ReadAsStringAsync();
-                var token = JsonConvert.DeserializeObject<TokenResponse>(responseBody);
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var token = JsonConvert.DeserializeObject<TokenResponse>(responseBody);
 
-                _logger.LogInformation(response.StatusCode.ToString());
+                    _logger.LogInformation(response.StatusCode.ToString());
 
 
-                return token;
+                    return token;
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, response.StatusCode);
+                }
             }
             catch(Exception ex)
             {
-                throw ex;
+                return StatusCode(500, ex.Message);
             }
             
         }
